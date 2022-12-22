@@ -1,0 +1,395 @@
+---
+title: "Logistic Regression"
+author: "khalida Khaldi"
+date: "1/8/2022"
+output: html_document
+---
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+# Logistic Regression Project
+###### In this project we will be working with the UCI adult dataset. We will be attempting to predict if people in the data set belong in a certain class by salary, either making <=50k or >50k per year.
+
+
+
+
+
+```{r}
+rm(list = ls()) 
+
+cat("\014")  # ctrl+L
+
+```
+
+
+
+
+## Get the Data
+
+Read in the adult_sal.csv file and set it to a data frame called adult
+
+```{r}
+adult <- read.csv('adult_sal.csv')
+
+```
+
+Check the head of adult
+
+```{r}
+head(adult)
+```
+
+
+We  notice the index has been repeated. We Drop this column.
+
+
+
+```{r}
+adult$X <- NULL
+head(adult)
+```
+
+Check the head,str, and summary of the data now.
+
+```{r}
+head(adult)
+```
+
+
+
+```{r}
+str(adult)
+```
+
+```{r}
+summary(adult)
+```
+
+
+## Data Cleaning
+
+We Notice that we have a lot of columns that are cateogrical factors, however a lot of these columns have too many factors than may be necessary. In this data cleaning section we'll try to clean these columns up by reducing the number of factors.
+ 
+#### type_employer column
+
+To check out the frequency of the type_employer column; we Use table().
+
+```{r}
+table(adult$type_employer)
+
+```
+
+How many Null values are there for type_employer? What are the two smallest groups?
+We see that  there are 1836 null values, the smallest groups are: Never-worked = 7,  without-pay = 14.
+
+
+
+Combine these two smallest groups into a single group called "Unemployed". 
+
+
+
+```{r}
+
+func_unpld <- function(work){
+    work <- as.character(work)
+    if (work=='Never-worked' | work=='Without-pay'){
+        return('Unemployed')
+    }else{
+        return(work)
+    }
+}
+
+ adult$type_employer <- sapply(adult$type_employer, func_unpld)  
+
+
+
+```
+
+Check the  adult$type_employer
+
+
+```{r}
+table(adult$type_employer)
+
+```
+
+#### Marital Column
+
+Use table() to look at the marital column
+
+
+```{r}
+table(adult$marital)
+```
+Reduce this to three groups:
+
+Married
+Not-Married
+Never-Married
+
+
+
+```{r}
+mari_func <- function(statue){
+    if (statue=='Divorced' | statue=='Separated' | statue=='Widowed'){
+        return('Not-Maried')
+      
+    }else if(statue=='Never-married'){
+        return(statue)
+      
+    }else{
+         return('Married')
+    }
+}
+
+adult$marital <- sapply(adult$marital, mari_func) 
+```
+
+
+Let us  check the adult$marital
+
+
+
+```{r}
+table(adult$marital)
+```
+
+
+
+#### Country Column
+Check the country column using table()
+
+
+
+
+
+```{r message=FALSE, warning=FALSE}
+table(adult$country)
+```
+Group these countries together  by continents. 
+
+
+```{r message=FALSE, warning=FALSE}
+levels(adult$country)
+```
+
+```{r message=FALSE, warning=FALSE}
+Asia <- c('China','Hong','India','Iran','Cambodia','Japan', 'Laos' ,
+          'Philippines' ,'Vietnam' ,'Taiwan', 'Thailand')
+
+North.America <- c('Canada','United-States','Puerto-Rico' )
+
+Europe <- c('England' ,'France', 'Germany' ,'Greece','Holand-Netherlands','Hungary',
+            'Ireland','Italy','Poland','Portugal','Scotland','Yugoslavia')
+
+Latin.America <- c('Columbia','Cuba','Dominican-Republic','Ecuador',
+                             'El-Salvador','Guatemala','Haiti','Honduras',
+                             'Mexico','Nicaragua','Outlying-US(Guam-USVI-etc)','Peru',
+                            'Jamaica','Trinadad&Tobago')
+Other <- c('unknown')
+```
+
+
+```{r message=FALSE, warning=FALSE}
+fun_country <- function(contnt){
+    if (contnt %in% Asia){
+        return('Asia')
+    }else if (contnt %in% North.America){
+        return('North.America')
+    }else if (contnt %in% Europe){
+        return('Europe')
+    }else if (contnt %in% Latin.America){
+        return('Latin.America')
+    }else{
+        return('unknown')      
+    }
+}
+
+```
+
+
+
+```{r message=FALSE, warning=FALSE}
+adult$country <- sapply(adult$country,fun_country)
+```
+
+check adult$country
+
+
+```{r message=FALSE, warning=FALSE}
+table(adult$country)
+```
+
+Check the str() of adult again. Make sure any of the columns we changed have factor levels with factor()
+
+```{r message=FALSE, warning=FALSE}
+str(adult)
+```
+
+convert some columns into factor using factor()
+
+```{r message=FALSE, warning=FALSE}
+adult$country <- sapply(adult$country,factor)    # or using factor(), factor(adult$country)
+adult$type_employer <- sapply(adult$type_employer,factor)
+adult$marital<- sapply(adult$marital,factor)
+adult$education<- sapply(adult$education,factor)
+adult$occupation <- sapply(adult$occupation ,factor)
+adult$relationship <- sapply(adult$relationship ,factor)
+adult$race <- sapply(adult$race ,factor)
+adult$sex <- sapply(adult$sex ,factor)
+adult$income <- sapply(adult$income ,factor)
+```
+
+Check adult 
+ 
+ 
+```{r message=FALSE, warning=FALSE}
+str(adult)
+```
+ 
+## Missing Data
+Install and load the Amelia package.
+
+```{r message=FALSE, warning=FALSE}
+library(Amelia)
+```
+
+Convert any cell with a '?' or a ' ?' value to a NA value. 
+
+```{r message=FALSE, warning=FALSE}
+adult[adult == '?'] <- NA
+```
+
+Using table() on a column with NA values. we  see 0 for.
+
+
+```{r message=FALSE, warning=FALSE}
+table(adult$type_employer)
+```
+
+```{r message=FALSE, warning=FALSE}
+adult$type_employer <- sapply(adult$type_employer,factor)
+adult$country <- sapply(adult$country,factor)
+adult$marital <- sapply(adult$marital,factor)
+adult$occupation <- sapply(adult$occupation,factor)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+missmap(adult)
+```
+Use na.omit() to omit NA data from the adult data frame. 
+
+```{r message=FALSE, warning=FALSE}
+adult <- na.omit(adult)
+```
+
+Use missmap() to check that all the NA values were in fact dropped.
+
+```{r message=FALSE, warning=FALSE}
+ missmap(adult)
+```
+
+## Explotory Data Analysis.
+
+ Exploring Data  using visualization.
+
+
+Use ggplot2 to create a histogram of ages, colored by income.
+
+
+```{r message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+ggplot(adult,aes(age)) + geom_histogram(aes(fill=income),color='blue',binwidth=2) + theme_bw()
+```
+Plot a histogram of hours worked per week
+
+
+
+```{r message=FALSE, warning=FALSE}
+ggplot(adult,aes(hr_per_week)) + geom_histogram() + theme_bw()
+```
+
+Rename the country column to region column to better reflect the factor levels.
+
+
+
+```{r message=FALSE, warning=FALSE}
+names(adult)[names(adult)=="country"] <- "region"
+```
+
+Create a barplot of region with the fill color defined by income class. Optional: Figure out how rotate the x axis text for readability.
+
+```{r message=FALSE, warning=FALSE}
+ggplot(adult,aes(region)) + geom_bar(aes(fill=income),color='blue')+theme_bw()+
+theme(axis.text.x = element_text( hjust = 2))
+```
+
+Take a quick look at the head() of adult to make sure we have a good overview 
+
+
+```{r message=FALSE, warning=FALSE}
+head(adult)
+```
+
+
+
+Train Test Split
+Split the data into a train and test set using the caTools library.
+
+
+```{r message=FALSE, warning=FALSE}
+
+library(caTools)
+
+set.seed(42) 
+
+sample <- sample.split(adult$income, SplitRatio = 0.80) 
+training_feature = subset(adult, sample == TRUE)
+test = subset(adult, sample == FALSE)
+```
+
+Using  all the features to train a glm() model on the training data set, pass the argument family=binomial(logit) into the glm function.
+
+
+
+```{r message=FALSE, warning=FALSE}
+model = glm(income ~ ., family = binomial(logit), data = training_feature)
+```
+Check the model summary
+
+
+```{r}
+##summary(model)
+```
+Using new.model <- step(your.model.name) to use the step() function to create a new model.
+
+
+```{r message=FALSE, warning=FALSE}
+new.step.model <- step(model)
+```
+
+Create a confusion matrix using the predict function with type='response' as an argument inside of that function.
+
+
+
+
+```{r message=FALSE, warning=FALSE}
+test$predicted.income = predict(model, newdata=test, type="response")
+
+table(test$income,test$predicted.income > 0.7)
+```
+

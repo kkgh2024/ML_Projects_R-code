@@ -1,0 +1,155 @@
+---
+title: "KNN"
+author: "khalida Khaldi"
+date: "1/10/2022"
+output: html_document
+---
+
+
+# KNN Project
+This project is about implementing a simple KNN  algorithm.
+
+## Get the Data
+
+We'll use the famous iris data set for this project. It's a small data set with flower features that can be used to attempt to predict the species of an iris flower.
+
+Use the ISLR library to get the iris data set. Check the head of the iris Data Frame.
+
+
+
+
+```{r}
+rm(list = ls()) 
+
+cat("\014")  # ctrl+L
+```
+
+Use the ISLR library to get the iris data set. Check the head of the iris Data Frame.
+
+```{r}
+library(ISLR)
+df_iris = data.frame(iris)
+head(df_iris)
+
+```
+
+```{r}
+str(df_iris)
+```
+
+## Standardize Data 
+
+Since standardizing features is crucial to use KNN algorithm. Although  the iris data set has all its features in the same order of magnitude. Lets go ahead and do this even though its not necessary for this data!
+
+Use scale() to standardize the feature columns of the iris dataset. 
+
+
+
+
+```{r message=FALSE, warning=FALSE}
+var(df_iris[,3])
+```
+
+```{r message=FALSE, warning=FALSE}
+library(dplyr)
+```
+
+
+```{r message=FALSE, warning=FALSE}
+df <- select(df_iris, -5)
+feature_scales <- scale(df)
+```
+Check that the scaling worked by checking the variance of one of the new columns.
+
+
+```{r message=FALSE, warning=FALSE}
+var(feature_scales[,3])
+```
+Join the standardized data with the response/target/label column (the column with the species names.
+
+
+```{r message=FALSE, warning=FALSE}
+df2 <- cbind(feature_scales, df_iris[5])
+
+```
+
+
+## Train and Test Splits
+
+#### Use the caTools library to split your standardized data into train and test sets. Us a 70/30 split.
+
+```{r message=FALSE, warning=FALSE}
+library(caTools)
+```
+
+
+
+
+
+```{r message=FALSE, warning=FALSE}
+set.seed(42)
+
+
+
+sample <- sample.split(df2$Species, SplitRatio = .70)
+train <- subset(df2, sample == TRUE)
+test <- subset(df2, sample == FALSE)
+```
+
+
+## Build a KNN model.
+#### Call the class library.
+
+```{r message=FALSE, warning=FALSE}
+library(class)
+```
+
+
+
+Use the knn function to predict Species of the test set. for k=1
+
+
+```{r message=FALSE, warning=FALSE}
+predicted_species <- knn(train[1:4],test[1:4],train$Species,k=1)
+predicted_species
+```
+
+
+The misclassification rate:
+
+
+```{r}
+mean(test$Species != predicted_species)
+```
+#### Choosing a K Value, Although our data is quite small for us to really get a feel for choosing a good K value, let's practice.Create a plot of the error (misclassification) rate for k values ranging from 1 to 10.
+
+```{r message=FALSE, warning=FALSE}
+predicted_species <- NULL
+error_rate <- NULL
+
+for(i in 1:10){
+    set.seed(42)
+    predicted_species<- knn(train[1:4],test[1:4],train$Species,k=i)
+    error_rate[i] <- mean(test$Species !=predicted_species)
+}
+```
+
+bring the ggplot2 into the memory
+
+```{r message=FALSE, warning=FALSE}
+library(ggplot2)
+```
+
+
+
+
+```{r message=FALSE, warning=FALSE}
+
+pl <- ggplot(data.frame(error_rate, 1:10),aes(x=1:10,y=error_rate)) + geom_point()
+pl + geom_line(lty=6,color='blue')
+```
+
+
+
+
+#### We noticed that the error drops to its lowest for k values between 2-6. Then it begins to jump back up again, this is due to how small the data set it. At k=10 you begin to approach setting k=10% of the data, which is quite large.
